@@ -42,19 +42,26 @@ jobs:
         working-directory: ./api-automation
         run: |
           ENV_NAME="${{ github.event.inputs.environment || 'QA' }}"
-          # We only need the JUnit XML for this method
+          # We generate the XML which contains the data for the table
           bru run --env $ENV_NAME --reporter-junit api-report.xml
         env:
           token: ${{ secrets.API_TOKEN }}
 
-      - name: Generate HTML Summary from JUnit
+      # This step creates the "Tests | Passed | Skipped | Failed" table
+      - name: Generate HTML Table Summary
         uses: test-summary/action@v2
         if: always()
         with:
           paths: "api-automation/api-report.xml"
-          output: "api-automation/summary.html"
+          output: "api-automation/table-summary.html"
 
-      - name: Send Visual Email Report
+      - name: Publish API Test Report to GitHub
+        uses: mikepenz/action-junit-report@v4
+        if: always()
+        with:
+          report_paths: 'api-automation/api-report.xml'
+
+      - name: Send Summary Email
         uses: dawidd6/action-send-mail@v3
         if: always() 
         with:
@@ -63,8 +70,8 @@ jobs:
           username: ${{ secrets.GMAIL_USER }}
           password: ${{ secrets.GMAIL_APP_PASSWORD }}
           subject: "QA Automation Summary: ${{ github.repository }}"
-          # We now point to the summary generated from the XML
-          html_body: file://api-automation/summary.html
+          # This injects the formatted table into the email body
+          html_body: file://api-automation/table-summary.html
           to: sr.yalluri@gmail.com
           from: Bruno Automation Bot
           attachments: api-automation/api-report.xml
