@@ -42,16 +42,17 @@ jobs:
         working-directory: ./api-automation
         run: |
           ENV_NAME="${{ github.event.inputs.environment || 'QA' }}"
-          # Generates both JUnit for GitHub and HTML for the Email body
-          bru run --env $ENV_NAME --reporter-junit api-report.xml --reporter-html api-report.html
+          # We only need the JUnit XML for this method
+          bru run --env $ENV_NAME --reporter-junit api-report.xml
         env:
           token: ${{ secrets.API_TOKEN }}
 
-      - name: Publish API Test Report to GitHub
-        uses: mikepenz/action-junit-report@v4
+      - name: Generate HTML Summary from JUnit
+        uses: test-summary/action@v2
         if: always()
         with:
-          report_paths: 'api-automation/api-report.xml'
+          paths: "api-automation/api-report.xml"
+          output: "api-automation/summary.html"
 
       - name: Send Visual Email Report
         uses: dawidd6/action-send-mail@v3
@@ -62,9 +63,8 @@ jobs:
           username: ${{ secrets.GMAIL_USER }}
           password: ${{ secrets.GMAIL_APP_PASSWORD }}
           subject: "QA Automation Summary: ${{ github.repository }}"
-          # This reads the HTML file and renders it as the email body
-          html_body: file://api-automation/api-report.html
+          # We now point to the summary generated from the XML
+          html_body: file://api-automation/summary.html
           to: sr.yalluri@gmail.com
           from: Bruno Automation Bot
-          # We still attach the XML in case you need the raw data
           attachments: api-automation/api-report.xml
