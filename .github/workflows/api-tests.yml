@@ -42,12 +42,12 @@ jobs:
         working-directory: ./api-automation
         run: |
           ENV_NAME="${{ github.event.inputs.environment || 'QA' }}"
-          # We generate the XML which contains the data for the table
+          # Generate the XML data source
           bru run --env $ENV_NAME --reporter-junit api-report.xml
         env:
           token: ${{ secrets.API_TOKEN }}
 
-      # This step creates the "Tests | Passed | Skipped | Failed" table
+      # Transforms the XML into the specific table format for the email body
       - name: Generate HTML Table Summary
         uses: test-summary/action@v2
         if: always()
@@ -69,8 +69,8 @@ jobs:
           server_port: 465
           username: ${{ secrets.GMAIL_USER }}
           password: ${{ secrets.GMAIL_APP_PASSWORD }}
-          subject: "QA Automation Summary: ${{ github.repository }}"
-          # This injects the formatted table into the email body
+          subject: "QA Automation Summary: ${{ github.repository }} - ${{ github.run_id }}"
+          # Injects the formatted table-summary.html as the email content
           html_body: file://api-automation/table-summary.html
           to: sr.yalluri@gmail.com
           from: Bruno Automation Bot
