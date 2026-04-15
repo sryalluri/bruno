@@ -1,0 +1,129 @@
+info:
+  name: Add Product to Cart
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{baseURL}}/api/ecom/user/add-to-cart"
+  headers:
+    - name: Authorization
+      value: "{{token}}"
+    - name: Accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "_id": "{{userId}}",
+        "product": {
+          "_id": "{{productID}}",
+          "productName": "ADIDAS ORIGINAL",
+          "productCategory": "electronics",
+          "productSubCategory": "mobiles",
+          "productPrice": 11500,
+          "productDescription": "Apple phone",
+          "productImage": "https://rahulshettyacademy.com/api/ecom/uploads/productImage_1767959265156.jpg",
+          "productRating": "0",
+          "productTotalOrders": "0",
+          "productStatus": true,
+          "productFor": "women",
+          "productAddedBy": "admin",
+          "__v": 0
+        }
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        const axios = require("axios");
+
+        // 1. Get environment variables
+        const productIds = JSON.parse(bru.getEnvVar("productIDs"));
+        const productNames = JSON.parse(bru.getEnvVar("productNames"));
+        const userId = bru.getEnvVar("userId");
+        const baseUrl = bru.getEnvVar("baseUrl");
+        const token = bru.getEnvVar("token");
+
+        // 2. Define an async function to handle the loop
+        async function addProductsToCart() {
+          for (let i = 0; i < productIds.length; i++) {
+            const id = productIds[i];
+            const productName = productNames[i];
+
+            try {
+              const response = await axios({
+                method: 'post',
+                url: `${baseUrl}/user/add-to-cart`,
+                headers: {
+                  "Content-Type": "application/json",
+                  "Authorization": token
+                },
+                data: {
+                  "_id": userId,
+                  "product": {
+                    "_id": id,
+                    "productName": productName,
+                    "productCategory": "electronics",
+                    "productSubCategory": "mobiles",
+                    "productPrice": 11500,
+                    "productDescription": "Apple phone",
+                    "productImage": "https://rahulshettyacademy.com/api/ecom/uploads/productImage_1767959265156.jpg",
+                    "productRating": "0",
+                    "productTotalOrders": "0",
+                    "productStatus": true,
+                    "productFor": "women",
+                    "productAddedBy": "admin",
+                    "__v": 0
+                  }
+                }
+              });
+
+              console.log(`Added product: ${productName} | ID: ${id} | Status: ${response.status}`);
+            } catch (error) {
+              console.error(`Error adding product: ${productName}`, error.message);
+            }
+          }
+        }
+
+        // 3. Execute the function
+        addProductsToCart();
+    - type: after-response
+      code: |-
+        test("Status code is 200 and product is added", function() {
+          const status = res.getStatus();
+          expect(status).to.equal(200);
+
+          if (status === 200) {
+            const data = res.getBody();
+            
+            // Check if the message matches
+            expect(data.message).to.equal('Product Added To Cart');
+          }
+        });
+    - type: tests
+      code: |-
+        // test("Status code is 200 and variables are set", function() {
+        //   const status = res.getStatus();
+        //   expect(status).to.equal(200);
+
+        //   if (status === 200) {
+        //     const data = res.getBody();
+        //     bru.setEnvVar("token", data.token);
+        //     bru.setEnvVar("userId", data.userId);
+        //   }
+        // });
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

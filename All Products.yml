@@ -1,0 +1,89 @@
+info:
+  name: All Products
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{baseURL}}/api/ecom/product/get-all-products"
+  headers:
+    - name: Authorization
+      value: "{{token}}"
+    - name: Accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "productName": "",
+        "minPrice": null,
+        "maxPrice": null,
+        "productCategory": [],
+        "productSubCategory": [],
+        "productFor": []
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        test("Find Product ID and set Environment Variable", function() {
+          const status = res.getStatus();
+          expect(status).to.equal(200);
+
+          if (status === 200) {
+            // 1. Parse the JSON response
+            const responseJson = res.getBody();
+            const products = responseJson.data;
+
+            // 2. Define the product you are searching for
+            const targetProduct = "ADIDAS ORIGINAL";
+
+            // 3. Initialize a variable to track if we found it
+            let foundId = null;
+
+            // 4. Iterate through the array (using a cleaner for...of loop)
+            for (let product of products) {
+              console.log("Checking product: " + product.productName);
+
+              if (product.productName === targetProduct) {
+                foundId = product._id;
+                console.log("Match found! ID is: " + foundId);
+                break; // Stop the loop immediately
+              }
+            }
+
+            // 5. Save to environment if a match was found
+            if (foundId) {
+              bru.setEnvVar("product_id", foundId);
+            } else {
+              // Fail the test explicitly if not found
+              expect.fail("Could not find " + targetProduct + " in the list.");
+            }
+          }
+        });
+    - type: tests
+      code: |-
+        // test("Status code is 200 and variables are set", function() {
+        //   const status = res.getStatus();
+        //   expect(status).to.equal(200);
+
+        //   if (status === 200) {
+        //     const data = res.getBody();
+        //     bru.setEnvVar("token", data.token);
+        //     bru.setEnvVar("userId", data.userId);
+        //   }
+        // });
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,0 +1,70 @@
+info:
+  name: Create Order
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{baseURL}}/api/ecom/order/create-order"
+  headers:
+    - name: Authorization
+      value: "{{token}}"
+    - name: Accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "orders": [
+          {
+            "country": "India",
+            "productOrderedId": "{{product_id}}"
+          }
+        ]
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        test("Status code is 201 and order is placed", function() {
+          const status = res.getStatus();
+          expect(status).to.equal(201);
+
+          if (status === 201) {
+            const data = res.getBody();
+            
+            // Capture the first order ID from the array
+            if (data.orders && data.orders.length > 0) {
+              bru.setEnvVar("orderID", data.orders[0]);
+            }
+
+            // Verify the success message
+            expect(data.message).to.equal('Order Placed Successfully');
+          }
+        });
+    - type: tests
+      code: |-
+        // test("Status code is 200 and variables are set", function() {
+        //   const status = res.getStatus();
+        //   expect(status).to.equal(200);
+
+        //   if (status === 200) {
+        //     const data = res.getBody();
+        //     bru.setEnvVar("token", data.token);
+        //     bru.setEnvVar("userId", data.userId);
+        //   }
+        // });
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "201"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

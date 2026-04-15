@@ -1,0 +1,41 @@
+info:
+  name: User Token
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseURL}}/api/ecom/auth/login"
+  body:
+    type: json
+    data: |-
+      {
+        "userEmail": "sr.yalluri@gmail.com",
+        "userPassword": "Thomson@05"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Status code is 200 and variables are set", function() {
+          const status = res.getStatus();
+          expect(status).to.equal(200);
+
+          if (status === 200) {
+            const data = res.getBody();
+            bru.setEnvVar("token", data.token);
+            bru.setEnvVar("userId", data.userId);
+          }
+        });
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

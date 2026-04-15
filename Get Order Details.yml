@@ -1,0 +1,64 @@
+info:
+  name: Get Order Details
+  type: http
+  seq: 5
+
+http:
+  method: GET
+  url: "{{baseURL}}/api/ecom/order/get-orders-details?id={{orderID}}"
+  headers:
+    - name: Authorization
+      value: "{{token}}"
+    - name: Accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  params:
+    - name: id
+      value: "{{orderID}}"
+      type: query
+  body:
+    type: json
+    data: ""
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        test("Status code is 200 and order details match", function() {
+          const status = res.getStatus();
+          expect(status).to.equal(200);
+
+          if (status === 200) {
+            const response = res.getBody();
+
+            // Verify the email associated with the order
+            expect(response.data.orderBy).to.equal('sr.yalluri@gmail.com');
+
+            // Verify the success message
+            expect(response.message).to.equal('Orders fetched for customer Successfully');
+          }
+        });
+    - type: tests
+      code: |-
+        // test("Status code is 200 and variables are set", function() {
+        //   const status = res.getStatus();
+        //   expect(status).to.equal(200);
+
+        //   if (status === 200) {
+        //     const data = res.getBody();
+        //     bru.setEnvVar("token", data.token);
+        //     bru.setEnvVar("userId", data.userId);
+        //   }
+        // });
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,0 +1,16 @@
+name: QA
+variables:
+  - name: token
+    value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2OThjMjgzODQ4ZDYyMDY0YjJmYzVlZDQiLCJ1c2VyRW1haWwiOiJzci55YWxsdXJpQGdtYWlsLmNvbSIsInVzZXJNb2JpbGUiOjg5NzgwMDgxODYsInVzZXJSb2xlIjoiY3VzdG9tZXIiLCJpYXQiOjE3NzYxNDkyOTQsImV4cCI6MTgwNzcwNjg5NH0.bNI4j5erNxixTvXSC5LVq6BDsha6Fm1b8fSFONPTRmg
+  - name: userId
+    value: 698c283848d62064b2fc5ed4
+  - name: productIDs
+    value: '["6960eae1c941646b7a8b3ed3","6960eac0c941646b7a8b3e68","6960ea76c941646b7a8b3dd5"]'
+  - name: productNames
+    value: '["ADIDAS ORIGINAL","ZARA COAT 3","iphone 13 pro"]'
+  - name: product_id
+    value: 6960eae1c941646b7a8b3ed3
+  - name: orderID
+    value: 69de16b5f86ba51a6563ed8c
+  - name: baseURL
+    value: https://rahulshettyacademy.com
