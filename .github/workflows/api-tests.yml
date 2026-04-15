@@ -1,0 +1,44 @@
+name: Bruno API Automation
+
+on:
+  # 1. Automatic trigger on code changes
+  push:
+    branches: [ main, develop ]
+  
+  # 2. Manual trigger with a dropdown for Prod/UAT
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Select the environment to run tests against'
+        required: true
+        default: 'uat'
+        type: choice
+        options:
+          - uat
+          - prod
+
+jobs:
+  run-api-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Bruno CLI
+        run: npm install -g @usebruno/cli
+
+      - name: Run Bruno Collection
+        # This logic picks the manual input choice OR defaults to 'uat' for push triggers
+        run: |
+          ENV_NAME="${{ github.event.inputs.environment || 'uat' }}"
+          bru run --env $ENV_NAME
+        env:
+          # Map your GitHub Secrets to the variables Bruno expects
+          token: ${{ secrets.API_TOKEN }}
+          baseUrl: ${{ vars.BASE_URL }}
