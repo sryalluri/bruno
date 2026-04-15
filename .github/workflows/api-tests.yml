@@ -10,12 +10,18 @@ on:
       environment:
         description: 'Select the environment to run tests against'
         required: true
-        default: 'uat'
+        default: 'QA'
         type: choice
         options:
-          - QA
+          - QA  
           - uat
           - prod
+
+# CRITICAL: This allows the JUnit action to write the report to your PR
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
 
 jobs:
   run-api-tests:
@@ -34,11 +40,11 @@ jobs:
         run: npm install -g @usebruno/cli
 
       - name: Run Bruno Collection
-        # We navigate into the folder and run the CLI there
         working-directory: ./api-automation
         run: |
           ENV_NAME="${{ github.event.inputs.environment || 'uat' }}"
-          bru run --env $ENV_NAME --reporter junit --output api-report.xml
+          # Corrected flags: --reporter-junit points directly to the file destination
+          bru run --env $ENV_NAME --reporter-junit api-report.xml
         env:
           token: ${{ secrets.API_TOKEN }}
 
@@ -46,5 +52,4 @@ jobs:
         uses: mikepenz/action-junit-report@v4
         if: always()
         with:
-          # Path relative to the root, so include folder name
           report_paths: 'api-automation/api-report.xml'
