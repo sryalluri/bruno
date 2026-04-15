@@ -10,14 +10,13 @@ on:
       environment:
         description: 'Select the environment to run tests against'
         required: true
-        default: 'QA'
+        default: 'QA' # Matches your first option
         type: choice
         options:
           - QA  
           - uat
           - prod
 
-# CRITICAL: This allows the JUnit action to write the report to your PR
 permissions:
   contents: read
   checks: write
@@ -42,8 +41,8 @@ jobs:
       - name: Run Bruno Collection
         working-directory: ./api-automation
         run: |
-          ENV_NAME="${{ github.event.inputs.environment || 'uat' }}"
-          # Corrected flags: --reporter-junit points directly to the file destination
+          # Updated default to 'QA' to match your input options
+          ENV_NAME="${{ github.event.inputs.environment || 'QA' }}"
           bru run --env $ENV_NAME --reporter-junit api-report.xml
         env:
           token: ${{ secrets.API_TOKEN }}
@@ -53,3 +52,23 @@ jobs:
         if: always()
         with:
           report_paths: 'api-automation/api-report.xml'
+
+      # FIXED INDENTATION BELOW
+      - name: Send JUnit Report via Email
+        uses: dawidd6/action-send-mail@v3
+        if: always() 
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.GMAIL_USER }}
+          password: ${{ secrets.GMAIL_APP_PASSWORD }}
+          subject: "QA Automation Report: ${{ github.repository }} - ${{ github.run_id }}"
+          body: |
+            The API Automation suite has completed.
+            Repository: ${{ github.repository }}
+            Workflow Status: ${{ job.status }}
+            
+            Find the detailed summary in the attached JUnit XML.
+          to: sr.yalluri@gmail.com
+          from: GitHub Actions Automation
+          attachments: api-automation/api-report.xml
