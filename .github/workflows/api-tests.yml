@@ -1,11 +1,10 @@
 name: Bruno API Automation
 
 on:
-  # 1. Automatic trigger on code changes
   push:
     branches: [ main, develop ]
-  
-  # 2. Manual trigger with a dropdown for Prod/UAT
+  pull_request:
+    branches: [ main ]
   workflow_dispatch:
     inputs:
       environment:
@@ -14,7 +13,6 @@ on:
         default: 'uat'
         type: choice
         options:
-          - QA  
           - uat
           - prod
 
@@ -35,11 +33,17 @@ jobs:
         run: npm install -g @usebruno/cli
 
       - name: Run Bruno Collection
-        # This logic picks the manual input choice OR defaults to 'uat' for push triggers
+        # We navigate into the folder and run the CLI there
+        working-directory: ./api-automation
         run: |
           ENV_NAME="${{ github.event.inputs.environment || 'uat' }}"
-          bru run --env $ENV_NAME
+          bru run --env $ENV_NAME --reporter junit --output api-report.xml
         env:
-          # Map your GitHub Secrets to the variables Bruno expects
           token: ${{ secrets.API_TOKEN }}
-          baseUrl: ${{ vars.BASE_URL }}
+
+      - name: Publish API Test Report
+        uses: mikepenz/action-junit-report@v4
+        if: always()
+        with:
+          # Path relative to the root, so include folder name
+          report_paths: 'api-automation/api-report.xml'
