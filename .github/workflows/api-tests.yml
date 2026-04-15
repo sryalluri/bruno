@@ -10,7 +10,7 @@ on:
       environment:
         description: 'Select the environment to run tests against'
         required: true
-        default: 'QA' # Matches your first option
+        default: 'QA'
         type: choice
         options:
           - QA  
@@ -41,20 +41,19 @@ jobs:
       - name: Run Bruno Collection
         working-directory: ./api-automation
         run: |
-          # Updated default to 'QA' to match your input options
           ENV_NAME="${{ github.event.inputs.environment || 'QA' }}"
-          bru run --env $ENV_NAME --reporter-junit api-report.xml
+          # Generates both JUnit for GitHub and HTML for the Email body
+          bru run --env $ENV_NAME --reporter-junit api-report.xml --reporter-html api-report.html
         env:
           token: ${{ secrets.API_TOKEN }}
 
-      - name: Publish API Test Report
+      - name: Publish API Test Report to GitHub
         uses: mikepenz/action-junit-report@v4
         if: always()
         with:
           report_paths: 'api-automation/api-report.xml'
 
-      # FIXED INDENTATION BELOW
-      - name: Send JUnit Report via Email
+      - name: Send Visual Email Report
         uses: dawidd6/action-send-mail@v3
         if: always() 
         with:
@@ -62,13 +61,10 @@ jobs:
           server_port: 465
           username: ${{ secrets.GMAIL_USER }}
           password: ${{ secrets.GMAIL_APP_PASSWORD }}
-          subject: "QA Automation Report: ${{ github.repository }} - ${{ github.run_id }}"
-          body: |
-            The API Automation suite has completed.
-            Repository: ${{ github.repository }}
-            Workflow Status: ${{ job.status }}
-            
-            Find the detailed summary in the attached JUnit XML.
+          subject: "QA Automation Summary: ${{ github.repository }}"
+          # This reads the HTML file and renders it as the email body
+          html_body: file://api-automation/api-report.html
           to: sr.yalluri@gmail.com
-          from: GitHub Actions Automation
+          from: Bruno Automation Bot
+          # We still attach the XML in case you need the raw data
           attachments: api-automation/api-report.xml
